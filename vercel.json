@@ -1,0 +1,13 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": ".next",
+    "framework": "nextjs",
+    "functions": {
+        "src/app/api/**/*.js": {
+            "runtime": "nodejs18.x"
+        }
+    },
+    "env": {
+        "GOOGLE_API_KEY": "@google_api_key"
+    }
+}
