@@ -15,9 +15,8 @@ function initializeGemini() {
         const apiKey = process.env.GOOGLE_API_KEY || 'your-api-key-here'
         console.log('Google API Key status:', apiKey === 'your-api-key-here' ? 'NOT SET' : 'SET')
 
-        // Temporary: You can put your API key directly here for testing
-        // Replace 'your-api-key-here' with your actual API key
-        const finalApiKey = apiKey === 'your-api-key-here' ? 'AIzaSyC7dzYeZiU5zpiicgXLZ6mAUlZe-DR1muU' : apiKey
+        // Use environment variable for API key
+        const finalApiKey = apiKey
         genAI = new GoogleGenerativeAI(finalApiKey, {
             apiVersion: 'v1'
         })
