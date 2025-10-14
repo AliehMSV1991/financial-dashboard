@@ -19,6 +19,29 @@ GOOGLE_API_KEY=your_actual_api_key_here
 npm run dev
 ```
 
+## مرحله 2.5: حل مشکلات رایج
+
+اگر خطای "Google API key not configured" دریافت کردید:
+
+1. **بررسی فایل .env.local:**
+   - مطمئن شوید فایل `.env.local` در ریشه پروژه وجود دارد
+   - API key را بدون فاصله اضافی کپی کنید
+
+2. **بررسی نام متغیر:**
+   ```env
+   GOOGLE_API_KEY=your_actual_api_key_here
+   ```
+
+3. **ری‌استارت سرور:**
+   ```bash
+   # توقف سرور (Ctrl+C)
+   npm run dev
+   ```
+
+4. **برای Vercel:**
+   - در Vercel Dashboard → Settings → Environment Variables
+   - متغیر `GOOGLE_API_KEY` را اضافه کنید
+
 ## مرحله 3: تست
 
 حالا می‌تونید در چت از دستیار هوشمند استفاده کنید:

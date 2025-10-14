@@ -1,106 +1,17 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect } from 'react'
+import { financialDataGenerator } from '@/utils/financial-data-generator'
 
 const FinancialContext = createContext()
 
 export function FinancialProvider({ children }) {
     const [selectedCells, setSelectedCells] = useState([])
-    const [rowData, setRowData] = useState([
-        {
-            id: 1,
-            jobTitle: 'CEO',
-            salaryPerMonth: 15000,
-            month1: 15000,
-            month2: 15000,
-            month3: 15000,
-            month4: 15000,
-            month5: 15000,
-            month6: 15000
-        },
-        {
-            id: 2,
-            jobTitle: 'CTO',
-            salaryPerMonth: 12000,
-            month1: 12000,
-            month2: 12000,
-            month3: 12000,
-            month4: 12000,
-            month5: 12000,
-            month6: 12000
-        },
-        {
-            id: 3,
-            jobTitle: 'CFO',
-            salaryPerMonth: 10000,
-            month1: 10000,
-            month2: 10000,
-            month3: 10000,
-            month4: 10000,
-            month5: 10000,
-            month6: 10000
-        },
-        {
-            id: 4,
-            jobTitle: 'VP Engineering',
-            salaryPerMonth: 8000,
-            month1: 8000,
-            month2: 8000,
-            month3: 8000,
-            month4: 8000,
-            month5: 8000,
-            month6: 8000
-        },
-        {
-            id: 5,
-            jobTitle: 'VP Marketing',
-            salaryPerMonth: 7000,
-            month1: 7000,
-            month2: 7000,
-            month3: 7000,
-            month4: 7000,
-            month5: 7000,
-            month6: 7000
-        },
-        {
-            id: 6,
-            jobTitle: 'VP Sales',
-            salaryPerMonth: 7500,
-            month1: 7500,
-            month2: 7500,
-            month3: 7500,
-            month4: 7500,
-            month5: 7500,
-            month6: 7500
-        },
-        {
-            id: 7,
-            jobTitle: 'Senior Developer',
-            salaryPerMonth: 6000,
-            month1: 6000,
-            month2: 6000,
-            month3: 6000,
-            month4: 6000,
-            month5: 6000,
-            month6: 6000
-        },
-        {
-            id: 8,
-            jobTitle: 'Total',
-            salaryPerMonth: 65500, // Calculated total
-            month1: 65500,
-            month2: 65500,
-            month3: 65500,
-            month4: 65500,
-            month5: 65500,
-            month6: 65500
-        }
-    ])
+    const [isInitialized, setIsInitialized] = useState({})
+    const [activeTab, setActiveTab] = useState('salary')
+    const [rowData, setRowData] = useState([])
 
-    // Calculate totals on initial load
-    useEffect(() => {
-        setRowData(prevData => calculateTotals(prevData))
-    }, [])
+    // No initial data - all tabs start empty
 
     const updateRowData = (newData) => {
         // Calculate totals for the Total row
@@ -419,6 +330,32 @@ export function FinancialProvider({ children }) {
         setSelectedCells([])
     }
 
+    // Generate initial data based on user responses
+    const generateInitialData = (category, userResponses) => {
+        financialDataGenerator.storeUserResponse(category, 'userResponses', userResponses)
+
+        switch (category) {
+            case 'salary':
+                return financialDataGenerator.generateSalaryData(userResponses)
+            case 'marketing':
+                return financialDataGenerator.generateMarketingData(userResponses)
+            case 'sales':
+                return financialDataGenerator.generateSalesData(userResponses)
+            case 'revenue':
+                return financialDataGenerator.generateRevenueData(userResponses)
+            default:
+                return rowData
+        }
+    }
+
+    // Initialize data for a specific tab
+    const initializeTabData = (tabName, userResponses) => {
+        const newData = generateInitialData(tabName, userResponses)
+        setRowData(newData)
+        setIsInitialized(prev => ({ ...prev, [tabName]: true }))
+        setActiveTab(tabName)
+    }
+
     return (
         <FinancialContext.Provider value={{
             rowData,
@@ -426,7 +363,12 @@ export function FinancialProvider({ children }) {
             applySalaryChange,
             selectedCells,
             selectCell,
-            clearSelection
+            clearSelection,
+            isInitialized,
+            activeTab,
+            setActiveTab,
+            generateInitialData,
+            initializeTabData
         }}>
             {children}
         </FinancialContext.Provider>

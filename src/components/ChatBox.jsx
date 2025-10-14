@@ -3,27 +3,29 @@
 import { useState, useRef, useEffect } from 'react'
 import { runLocalModel, runLocalModelFallback } from '@/utils/llm'
 import { useFinancial } from '@/context/FinancialContext'
+import { financialDataGenerator } from '@/utils/financial-data-generator'
 
 export default function ChatBox() {
-    const { applySalaryChange } = useFinancial()
+    const { applySalaryChange, initializeTabData, isInitialized, activeTab, generateInitialData } = useFinancial()
+
+    // Check if current tab is initialized
+    const isCurrentTabInitialized = isInitialized[activeTab] || false
     const [messages, setMessages] = useState([
         {
             id: 1,
             type: 'assistant',
-            content: 'What if I told you I can help you with financial data analysis and growth projections. What would you like to work on?',
-            timestamp: '14:30'
-        },
-        {
-            id: 2,
-            type: 'user',
-            content: 'Show me the Q4 sales performance data in a chart.',
-            timestamp: '14:32'
+            content: 'Welcome! I can help you create a comprehensive financial plan. Let\'s start by understanding your business. What type of company are you running and what\'s your main focus? (Marketing, Sales, or Revenue planning?)',
+            timestamp: new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            })
         }
     ])
     const [inputValue, setInputValue] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef(null)
-    const [activeTab, setActiveTab] = useState('chat')
+    const [chatActiveTab, setChatActiveTab] = useState('chat')
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -32,6 +34,24 @@ export default function ChatBox() {
     useEffect(() => {
         scrollToBottom()
     }, [messages])
+
+    // Check if we need to start data generation for current tab
+    useEffect(() => {
+        if (activeTab && !isCurrentTabInitialized) {
+            // Let Gemini handle the conversation flow
+            const welcomeMessage = {
+                id: Date.now(),
+                type: 'assistant',
+                content: `Let's set up your ${activeTab} data. Please tell me about your ${activeTab} requirements and I'll help you create the appropriate data structure.`,
+                timestamp: new Date().toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                })
+            }
+            setMessages(prev => [...prev, welcomeMessage])
+        }
+    }, [activeTab, isCurrentTabInitialized])
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isLoading) return
@@ -52,11 +72,58 @@ export default function ChatBox() {
         setIsLoading(true)
 
         try {
-            // Call the local LLM
+            // Use Gemini for all interactions
             const response = await runLocalModel(inputValue)
 
+            // Handle data generation responses
+            if (response && response.type === 'data_generation') {
+                // Generate table data based on collected information
+                const generatedData = generateInitialData(response.category, response.data)
+                initializeTabData(response.category, response.data)
+
+                const assistantMessage = {
+                    id: Date.now() + 1,
+                    type: 'assistant',
+                    content: `✅ Perfect! I've created your ${response.category} table based on the information you provided. The table is now ready with realistic financial projections.`,
+                    timestamp: new Date().toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    })
+                }
+                setMessages(prev => [...prev, assistantMessage])
+            }
+            // Handle setup questions
+            else if (response && response.type === 'setup_question') {
+                const assistantMessage = {
+                    id: Date.now() + 1,
+                    type: 'assistant',
+                    content: response.message,
+                    timestamp: new Date().toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    })
+                }
+                setMessages(prev => [...prev, assistantMessage])
+            }
+            // Handle user responses to setup questions
+            else if (response && response.type === 'response' && !isInitialized) {
+                // Regular response when not in question flow
+                const assistantMessage = {
+                    id: Date.now() + 1,
+                    type: 'assistant',
+                    content: response?.message || response,
+                    timestamp: new Date().toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    })
+                }
+                setMessages(prev => [...prev, assistantMessage])
+            }
             // Handle command responses
-            if (response && response.type === 'command') {
+            else if (response && response.type === 'command') {
                 // Apply the financial command
                 applySalaryChange(response.command)
 

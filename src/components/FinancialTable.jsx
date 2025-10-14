@@ -1,14 +1,39 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 import { useFinancial } from '@/context/FinancialContext'
+import { questionFlowManager } from '@/utils/question-flow'
 
 export default function FinancialTable() {
-    const { rowData, updateRowData, selectedCells, selectCell, clearSelection } = useFinancial()
-    const [activeTab, setActiveTab] = useState('salary')
+    const { rowData, updateRowData, selectedCells, selectCell, clearSelection, activeTab, setActiveTab, isInitialized, initializeTabData } = useFinancial()
+
+    // Check if current tab is initialized
+    const isCurrentTabInitialized = isInitialized[activeTab] || false
+    const [questionFlow, setQuestionFlow] = useState(null)
+
+    // Check if tab needs questions when activeTab changes
+    useEffect(() => {
+        if (activeTab && !isCurrentTabInitialized) {
+            // Check if this tab has questions
+            if (questionFlowManager.hasQuestions(activeTab)) {
+                const questionFlowData = questionFlowManager.startQuestionFlow(activeTab)
+                if (questionFlowData) {
+                    setQuestionFlow(questionFlowData)
+                    // Send question to chat
+                    sendQuestionToChat(questionFlowData)
+                }
+            }
+        }
+    }, [activeTab, isCurrentTabInitialized])
+
+    // Send question to chat
+    const sendQuestionToChat = (questionData) => {
+        // This will be handled by the chat system
+        console.log('Question for chat:', questionData)
+    }
 
     // Helper function for cell renderer
     const cellRenderer = (params) => {
@@ -25,7 +50,7 @@ export default function FinancialTable() {
         width: 120,
         cellRenderer: cellRenderer,
         cellStyle: (params) => {
-            const isTotal = params.data.id === 8
+            const isTotal = params.data.category === 'Total in month'
             const isSelected = selectedCells.includes(`${params.data.id}-${field}`)
             return {
                 fontWeight: isTotal ? 'bold' : 'normal',
@@ -40,56 +65,118 @@ export default function FinancialTable() {
     })
 
 
-    const columnDefs = useMemo(() => [
-        {
-            field: 'jobTitle',
-            headerName: 'Job Title',
-            width: 200,
-            cellStyle: (params) => {
-                const isTotal = params.data.id === 8
-                const isSelected = selectedCells.includes(`${params.data.id}-jobTitle`)
-                return {
-                    fontWeight: isTotal ? 'bold' : 'normal',
-                    color: isTotal ? '#10b981' : '#f9fafb',
-                    backgroundColor: isSelected ? '#3b82f6' : isTotal ? '#1f2937' : '#111827',
-                    border: isSelected ? '2px solid #60a5fa' : '1px solid #374151'
+    const columnDefs = useMemo(() => {
+        // Different column structures for different tabs
+        if (activeTab === 'salary') {
+            return [
+                {
+                    field: 'jobTitle',
+                    headerName: 'Job Title',
+                    width: 200,
+                    cellStyle: (params) => {
+                        const isTotal = params.data.id === 8
+                        const isSelected = selectedCells.includes(`${params.data.id}-jobTitle`)
+                        return {
+                            fontWeight: isTotal ? 'bold' : 'normal',
+                            color: isTotal ? '#10b981' : '#f9fafb',
+                            backgroundColor: isSelected ? '#3b82f6' : isTotal ? '#1f2937' : '#111827',
+                            border: isSelected ? '2px solid #60a5fa' : '1px solid #374151'
+                        }
+                    },
+                    onCellClicked: (params) => {
+                        selectCell(params.data.id, 'jobTitle')
+                    }
+                },
+                {
+                    field: 'salaryPerMonth',
+                    headerName: 'Salary per month',
+                    width: 150,
+                    cellRenderer: cellRenderer,
+                    cellStyle: (params) => {
+                        const isTotal = params.data.id === 8
+                        const isSelected = selectedCells.includes(`${params.data.id}-salaryPerMonth`)
+                        return {
+                            fontWeight: isTotal ? 'bold' : 'normal',
+                            color: isTotal ? '#10b981' : '#f9fafb',
+                            backgroundColor: isSelected ? '#3b82f6' : isTotal ? '#1f2937' : '#111827',
+                            border: isSelected ? '2px solid #60a5fa' : '1px solid #374151'
+                        }
+                    },
+                    onCellClicked: (params) => {
+                        selectCell(params.data.id, 'salaryPerMonth')
+                    }
+                },
+                {
+                    headerName: 'Hiring Plan',
+                    children: [
+                        createMonthColumn('month1', 'Month 1'),
+                        createMonthColumn('month2', 'Month 2'),
+                        createMonthColumn('month3', 'Month 3'),
+                        createMonthColumn('month4', 'Month 4'),
+                        createMonthColumn('month5', 'Month 5'),
+                        createMonthColumn('month6', 'Month 6')
+                    ]
                 }
-            },
-            onCellClicked: (params) => {
-                selectCell(params.data.id, 'jobTitle')
-            }
-        },
-        {
-            field: 'salaryPerMonth',
-            headerName: 'Salary per month',
-            width: 150,
-            cellRenderer: cellRenderer,
-            cellStyle: (params) => {
-                const isTotal = params.data.id === 8
-                const isSelected = selectedCells.includes(`${params.data.id}-salaryPerMonth`)
-                return {
-                    fontWeight: isTotal ? 'bold' : 'normal',
-                    color: isTotal ? '#10b981' : '#f9fafb',
-                    backgroundColor: isSelected ? '#3b82f6' : isTotal ? '#1f2937' : '#111827',
-                    border: isSelected ? '2px solid #60a5fa' : '1px solid #374151'
+            ]
+        } else {
+            // For other tabs (Marketing, Sales, Revenue)
+            return [
+                {
+                    field: 'category',
+                    headerName: 'Category',
+                    width: 200,
+                    cellStyle: (params) => {
+                        const isTotal = params.data.category === 'Total in month'
+                        const isSelected = selectedCells.includes(`${params.data.id}-category`)
+                        return {
+                            fontWeight: isTotal ? 'bold' : 'normal',
+                            color: isTotal ? '#10b981' : '#f9fafb',
+                            backgroundColor: isSelected ? '#3b82f6' : isTotal ? '#1f2937' : '#111827',
+                            border: isSelected ? '2px solid #60a5fa' : '1px solid #374151'
+                        }
+                    },
+                    onCellClicked: (params) => {
+                        selectCell(params.data.id, 'category')
+                    }
+                },
+                {
+                    field: 'description',
+                    headerName: 'Description',
+                    width: 250,
+                    cellStyle: (params) => {
+                        const isTotal = params.data.category === 'Total in month'
+                        const isSelected = selectedCells.includes(`${params.data.id}-description`)
+                        return {
+                            fontWeight: isTotal ? 'bold' : 'normal',
+                            color: isTotal ? '#10b981' : '#f9fafb',
+                            backgroundColor: isSelected ? '#3b82f6' : isTotal ? '#1f2937' : '#111827',
+                            border: isSelected ? '2px solid #60a5fa' : '1px solid #374151'
+                        }
+                    },
+                    onCellClicked: (params) => {
+                        selectCell(params.data.id, 'description')
+                    }
+                },
+                {
+                    headerName: 'First Year',
+                    children: [
+                        createMonthColumn('month1', 'Month 1'),
+                        createMonthColumn('month2', 'Month 2'),
+                        createMonthColumn('month3', 'Month 3'),
+                        createMonthColumn('month4', 'Month 4'),
+                        createMonthColumn('month5', 'Month 5'),
+                        createMonthColumn('month6', 'Month 6'),
+                        createMonthColumn('month7', 'Month 7'),
+                        createMonthColumn('month8', 'Month 8'),
+                        createMonthColumn('month9', 'Month 9'),
+                        createMonthColumn('month10', 'Month 10'),
+                        createMonthColumn('month11', 'Month 11'),
+                        createMonthColumn('month12', 'Month 12')
+                    ]
                 }
-            },
-            onCellClicked: (params) => {
-                selectCell(params.data.id, 'salaryPerMonth')
-            }
-        },
-        {
-            headerName: 'Hiring Plan',
-            children: [
-                createMonthColumn('month1', 'Month 1'),
-                createMonthColumn('month2', 'Month 2'),
-                createMonthColumn('month3', 'Month 3'),
-                createMonthColumn('month4', 'Month 4'),
-                createMonthColumn('month5', 'Month 5'),
-                createMonthColumn('month6', 'Month 6')
             ]
         }
-    ], [selectedCells])
+    }, [selectedCells, activeTab])
 
     const defaultColDef = useMemo(() => ({
         resizable: true,
@@ -183,22 +270,37 @@ export default function FinancialTable() {
 
             {/* Table */}
             <div className="flex-1 p-6">
-                <div className="h-full ">
-                    <AgGridReact
-                        rowData={rowData}
-                        columnDefs={columnDefs}
-                        defaultColDef={defaultColDef}
-                        onCellValueChanged={onCellValueChanged}
-                        animateRows={true}
-                        rowSelection="multiple"
-                        suppressRowClickSelection={true}
-                        className="h-full"
-                        domLayout="normal"
-                        suppressMenuHide={true}
-                        enableCellTextSelection={true}
-                        ensureDomOrder={true}
-                    />
-                </div>
+                {!isCurrentTabInitialized ? (
+                    <div className="h-full flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-200 mb-2">No Data Available</h3>
+                            <p className="text-gray-400 mb-4">Use the AI Assistant to generate initial data for this tab.</p>
+                            <p className="text-sm text-gray-500">Ask questions like "What's your marketing budget?" or "What's your target revenue?"</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="h-full ">
+                        <AgGridReact
+                            rowData={rowData}
+                            columnDefs={columnDefs}
+                            defaultColDef={defaultColDef}
+                            onCellValueChanged={onCellValueChanged}
+                            animateRows={true}
+                            rowSelection="multiple"
+                            suppressRowClickSelection={true}
+                            className="h-full"
+                            domLayout="normal"
+                            suppressMenuHide={true}
+                            enableCellTextSelection={true}
+                            ensureDomOrder={true}
+                        />
+                    </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="mt-4 flex space-x-3">

@@ -56,6 +56,13 @@ export async function runLocalModel(userInput) {
             return geminiResponse
         } catch (error) {
             console.error('Gemini API error:', error)
+
+            // Check if it's a quota error
+            if (error.message && error.message.includes('quota')) {
+                console.log('⚠️ Gemini quota exceeded, using local fallback')
+                return await generateIntelligentResponse(userInput)
+            }
+
             return {
                 type: 'response',
                 message: 'Sorry, I encountered an error. Please try again.'
@@ -281,6 +288,51 @@ function generateContextualResponse(analysis, userInput) {
 async function generateIntelligentResponse(userInput) {
     const analysis = analyzeMessage(userInput)
     const lowerInput = userInput.toLowerCase()
+
+    // Check for data generation requests
+    if (lowerInput.includes('salary') || lowerInput.includes('employee') || lowerInput.includes('job')) {
+        // Check if user provided specific information
+        const numbers = userInput.match(/\d+/g) || []
+        const jobTitles = userInput.match(/[a-zA-Z]+/g) || []
+
+        if (numbers.length > 0 && jobTitles.length > 0) {
+            // User provided some data, try to generate table
+            const employeeCount = parseInt(numbers[0]) || 4
+            const averageSalary = parseInt(numbers[1]) || 2000
+            const jobTitlesList = jobTitles.slice(0, 4).join(', ')
+
+            return {
+                type: 'data_generation',
+                category: 'salary',
+                data: {
+                    employeeCount: employeeCount,
+                    jobTitles: jobTitlesList,
+                    averageSalary: averageSalary,
+                    salaryGrowthRate: 20,
+                    bonusPercentage: 0
+                }
+            }
+        }
+
+        return {
+            type: 'setup_question',
+            message: "I'll help you create a salary table. First, let me ask you a few questions:\n\n1. How many employees do you have?\n2. What are their job titles?\n3. What's the average salary range?\n4. What's the annual growth rate?\n5. Do you offer bonuses?"
+        }
+    }
+
+    if (lowerInput.includes('marketing') || lowerInput.includes('budget')) {
+        return {
+            type: 'setup_question',
+            message: "I'll help you create a marketing budget table. Please tell me:\n\n1. What's your company size?\n2. What industry are you in?\n3. What's your monthly marketing budget?\n4. What marketing channels do you use?\n5. What's your target customer acquisition cost?"
+        }
+    }
+
+    if (lowerInput.includes('sales') || lowerInput.includes('revenue')) {
+        return {
+            type: 'setup_question',
+            message: "I'll help you create a sales or revenue table. Please tell me:\n\n1. What's your target monthly revenue?\n2. How many sales team members do you have?\n3. What's your average deal size?\n4. What's your conversion rate?\n5. What's your sales cycle length?"
+        }
+    }
 
     // Check for contextual responses first
     const contextualResponse = generateContextualResponse(analysis, userInput)
