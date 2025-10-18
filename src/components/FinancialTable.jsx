@@ -5,35 +5,12 @@ import { AgGridReact } from 'ag-grid-react'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 import { useFinancial } from '@/context/FinancialContext'
-import { questionFlowManager } from '@/utils/question-flow'
 
 export default function FinancialTable() {
     const { rowData, updateRowData, selectedCells, selectCell, clearSelection, activeTab, setActiveTab, isInitialized, initializeTabData } = useFinancial()
 
     // Check if current tab is initialized
     const isCurrentTabInitialized = isInitialized[activeTab] || false
-    const [questionFlow, setQuestionFlow] = useState(null)
-
-    // Check if tab needs questions when activeTab changes
-    useEffect(() => {
-        if (activeTab && !isCurrentTabInitialized) {
-            // Check if this tab has questions
-            if (questionFlowManager.hasQuestions(activeTab)) {
-                const questionFlowData = questionFlowManager.startQuestionFlow(activeTab)
-                if (questionFlowData) {
-                    setQuestionFlow(questionFlowData)
-                    // Send question to chat
-                    sendQuestionToChat(questionFlowData)
-                }
-            }
-        }
-    }, [activeTab, isCurrentTabInitialized])
-
-    // Send question to chat
-    const sendQuestionToChat = (questionData) => {
-        // This will be handled by the chat system
-        console.log('Question for chat:', questionData)
-    }
 
     // Helper function for cell renderer
     const cellRenderer = (params) => {

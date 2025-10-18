@@ -12,17 +12,17 @@ import { TableColumn, FinancialData } from '../types';
 import { CellEditor } from './cell-editor';
 import { cn } from '@/lib/utils';
 
-interface FinancialTableProps {
-  data: FinancialData[];
+interface FinancialTableProps<T extends { id: string; monthlyData: any[] } = FinancialData> {
+  data: T[];
   columns: TableColumn[];
-  onDataChange: (data: FinancialData[]) => void;
+  onDataChange: (data: T[]) => void;
   onRowAdd?: () => void;
   onRowDelete?: (id: string) => void;
   isLoading?: boolean;
   className?: string;
 }
 
-export function FinancialTable({
+export function FinancialTable<T extends { id: string; monthlyData: any[] } = FinancialData>({
   data,
   columns,
   onDataChange,
@@ -30,7 +30,7 @@ export function FinancialTable({
   onRowDelete,
   isLoading = false,
   className
-}: FinancialTableProps) {
+}: FinancialTableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: 'asc' | 'desc';
@@ -58,8 +58,8 @@ export function FinancialTable({
     return sortedData.filter(item =>
       columns.some(col => {
         const value = (item as any)[col.key];
-        return typeof value === 'string' && 
-               value.toLowerCase().includes(searchTerm.toLowerCase());
+        return typeof value === 'string' &&
+          value.toLowerCase().includes(searchTerm.toLowerCase());
       })
     );
   }, [sortedData, searchTerm, columns]);
@@ -123,7 +123,7 @@ export function FinancialTable({
             {filteredData.length} of {data.length} items
           </span>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {onRowAdd && (
             <button
@@ -186,7 +186,7 @@ export function FinancialTable({
                         value={(row as any)[column.key]}
                         onChange={(value) => handleCellChange(row.id, column.key, value)}
                         isEditable={column.isEditable !== false}
-                        type={column.type}
+                        type={column.type === 'date' ? 'text' : column.type}
                       />
                     )}
                   </td>

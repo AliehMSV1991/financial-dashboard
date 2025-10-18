@@ -29,8 +29,8 @@ export function useTabData<T extends { id: string }>(
       ...newRow,
       createdAt: new Date(),
       updatedAt: new Date()
-    } as T;
-    
+    } as unknown as T;
+
     setData(prev => [...prev, newItem]);
   }, []);
 
@@ -43,11 +43,11 @@ export function useTabData<T extends { id: string }>(
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // In a real implementation, this would fetch from API
       setIsLoading(false);
     } catch (err) {
