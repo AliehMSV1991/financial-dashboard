@@ -150,3 +150,4 @@ For issues and questions:
 ---
 
 **Built with ❤️ using Next.js and Google Gemini**
+

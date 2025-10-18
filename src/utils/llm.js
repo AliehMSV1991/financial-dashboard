@@ -834,3 +834,4 @@ export async function runLocalModelFallback(userInput) {
         message: "I'm your AI financial assistant! I can help you with:\n• Salary adjustments and calculations\n• Budget planning and analysis\n• Chart creation and visualization\n• Data analysis and insights\n• Scenario modeling\n\nTry commands like:\n• 'increase salary by 10%'\n• 'create a bar chart'\n• 'analyze budget trends'\n• 'project growth for next quarter'\n\nWhat would you like to work on?"
     }
 }
+
