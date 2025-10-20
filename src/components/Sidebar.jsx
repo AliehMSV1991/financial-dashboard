@@ -60,8 +60,8 @@ export default function Sidebar() {
                                 key={item.id}
                                 onClick={() => setActiveSection(item.id)}
                                 className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${item.active
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
                                     }`}
                             >
                                 <span className="mr-3 text-sm">{item.icon}</span>
@@ -83,8 +83,8 @@ export default function Sidebar() {
                                 key={item.id}
                                 onClick={() => setActiveItem(item.id)}
                                 className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${item.active
-                                        ? 'text-blue-400'
-                                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                                    ? 'text-blue-400'
+                                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
                                     }`}
                             >
                                 <span className="mr-3 text-sm">{item.icon}</span>
@@ -134,7 +134,7 @@ export default function Sidebar() {
                         <span className="text-white font-semibold text-sm">DM</span>
                     </div>
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-100">Delia Mahmoudi</p>
+                        <p className="text-sm font-medium text-gray-100">Dela Mahmoudi</p>
                         <p className="text-xs text-gray-400">Co-founder</p>
                     </div>
                     <div className="flex space-x-2">
